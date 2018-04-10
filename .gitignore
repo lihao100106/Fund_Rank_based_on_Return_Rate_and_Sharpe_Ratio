@@ -1,0 +1,10 @@
+data/
+dataset/
+logs/
+log/
+tmp/
+models/
+model/
+*.pyc
+.idea
+.DS_Store
