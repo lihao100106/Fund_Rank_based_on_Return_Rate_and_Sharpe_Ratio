@@ -1,6 +1,6 @@
 # coding:utf-8
 from bs4 import BeautifulSoup
-import urllib2
+import urllib
 import re
 import pandas as pd
 import numpy as np
@@ -17,7 +17,7 @@ def get_history_value_new(code, begin, fund_type):
     df_list = []
     for page_num in range(1, 10000):
         fund_url = 'http://fund.eastmoney.com/f10/F10DataApi.aspx?type=lsjz&code={}&page={}&per=1000'.format(code, page_num)
-        soup = BeautifulSoup(urllib2.urlopen(url=fund_url), "lxml")
+        soup = BeautifulSoup(urllib.request.urlopen(url=fund_url), "lxml")
         table = soup.find("table", {"class": "w782 comm lsjz"})
         td_th = re.compile('t[dh]')
         ret_list = []
@@ -44,7 +44,7 @@ def get_history_value_new(code, begin, fund_type):
         else:
             df_list.append(ret)
     df_ret = pd.concat(df_list, axis=0)
-    print df_ret.shape
+    print(df_ret.shape)
     df_ret.to_csv(VALUE_DIR + file_name, index=False, encoding='utf-8')
     return
 
@@ -55,7 +55,7 @@ def get_history_value(code, begin, fund_type):
         return
     fund_url = 'http://fund.eastmoney.com/f10/F10DataApi.aspx?type=lsjz&code={}' \
                '&page=1&per=3000&sdate={}&edate=&rt=0.8192617401606943'.format(code, begin)
-    soup = BeautifulSoup(urllib2.urlopen(url=fund_url), "lxml")
+    soup = BeautifulSoup(urllib.request(url=fund_url), "lxml")
     table = soup.find("table", {"class": "w782 comm lsjz"})
     td_th = re.compile('t[dh]')
     ret_list = []
@@ -71,7 +71,7 @@ def get_history_value(code, begin, fund_type):
 
     ret = pd.DataFrame(ret_list)
     ret.drop(0, inplace=True)
-    print ret.shape
+    print(ret.shape)
     ret.to_csv(VALUE_DIR + file_name, index=False, encoding='utf-8')
     return
 
@@ -84,8 +84,8 @@ def str_to_float(x):
         if tmp[0] in ['+']:
             return float(tmp[1:]) / 100.0
         return float(tmp[1:]) / 100.0
-    print 'ERROR'
-    print x
+    print('ERROR')
+    print(x)
     return 'ERROR'
 
 
