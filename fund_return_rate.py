@@ -1,7 +1,6 @@
 # coding:utf-8
-import urllib
+import requests
 import pandas as pd
-import datetime
 from config import *
 
 
@@ -26,9 +25,9 @@ def get_return_rate_rank(fund_type, num, sort_by_list):
     ret = None
     for sort_by in sort_by_list:
         fund_url = "http://fund.eastmoney.com/data/rankhandler.aspx?op=ph&dt=kf&ft={0}&rs=&gs=0&sc={1}zf" \
-                   "&st=desc&qdii=|&pi=1&pn={2}&dx=1".format(fund_type, sort_by, num)
-        response = urllib.request.urlopen(fund_url).read().decode()
-        df = get_rank_info(response, sort_by)
+                   "&st=desc&pi=1&pn={2}&dx=1".format(fund_type, sort_by, num)
+        response = requests.get(fund_url, timeout=100, headers=COMMON_HEADERS)
+        df = get_rank_info(response.text, sort_by)
         if ret is None:
             ret = df.copy()
         else:
