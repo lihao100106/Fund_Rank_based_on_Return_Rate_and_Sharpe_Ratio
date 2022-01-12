@@ -1,4 +1,5 @@
 # coding:utf-8
+from retry import retry
 import gevent
 from gevent import pool, monkey
 monkey.patch_all()
@@ -11,22 +12,28 @@ from config import *
 
 requests.adapters.DEFAULT_RETRIES = 2
 session = requests.Session()
+session.options('https://fund.eastmoney.com/')
 
-concurrency_pool = pool.Pool(8)
+concurrency_pool = pool.Pool(16)
 
 # 20190307 --- 之前爬取历史净值的url失效, 新增爬取逻辑
 def get_history_value(code, begin, fund_type):
-    file_name = "{}_fund_value_{}_{}.csv".format(fund_type, code, DATE_NOW)
+    file_name = f"{fund_type}_fund_value_{code}_{DATE_NOW}.csv"
     if file_name in os.listdir(VALUE_DIR):
         return
 
+    print(f'Start getting history value of [{fund_type}]{code}')
+
     df_list = []
     for page_num in range(1, 10000):
-        fund_url = f'http://fund.eastmoney.com/f10/F10DataApi.aspx?type=lsjz&code={code}&page={page_num}&per=1000'
-        soup = BeautifulSoup(session.get(fund_url).text, "lxml")
-        table = soup.find("table", {"class": "w782 comm lsjz"})
+        fund_url = f'https://fund.eastmoney.com/f10/F10DataApi.aspx?type=lsjz&code={code}&page={page_num}&per=1000'
         td_th = re.compile('t[dh]')
         ret_list = []
+        table = None
+        while table is None:
+            response = session.get(fund_url)
+            soup = BeautifulSoup(response.text, "lxml")
+            table = soup.find("table", {"class": "w782 comm lsjz"})
         for row in table.findAll("tr"):
             cells = row.findAll(td_th)
             row_data = dict()
@@ -118,6 +125,7 @@ def sr_rank_master(chose_type, top_rate, begin_date):
     chose_name_list = top_rr_df['name'].to_list()
     sharpe_r_list = []
     
+    @retry(Exception, logger=None)
     def get_history_value_concurrency_wrapper(fund_code, fund_name):
         get_history_value(fund_code, begin_date, chose_type)
         sr_day, sr_week, sr_month = cal_sharpe_ratio(chose_type, fund_code, begin_date)

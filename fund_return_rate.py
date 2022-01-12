@@ -26,14 +26,16 @@ def get_rank_info(response_data, sort_by):
 def get_return_rate_rank(fund_type, num, sort_by_list):
     ret = None
     for sort_by in sort_by_list:
-        fund_url = f"http://fund.eastmoney.com/data/rankhandler.aspx?op=ph&dt=kf&ft={fund_type}&rs=&gs=0" \
+        fund_url = f"https://fund.eastmoney.com/data/rankhandler.aspx?op=ph&dt=kf&ft={fund_type}&rs=&gs=0" \
                    f"&sc={sort_by}zf&st=desc&pi=1&pn={num}&dx=1"
-        response = session.get(fund_url, timeout=100, headers=COMMON_HEADERS)
-        df = get_rank_info(response.text, sort_by)
-        if ret is None:
-            ret = df.copy()
-        else:
-            ret = ret.merge(df.drop('name', axis=1), on='code', how='outer')
+        while 1:
+            response = session.get(fund_url, timeout=100, headers=COMMON_HEADERS)
+            df = get_rank_info(response.text, sort_by)
+            if ret is None:
+                ret = df.copy()
+            else:
+                ret = ret.merge(df.drop('name', axis=1), on='code', how='outer')
+            break
 
     ret['rank_avg'] = ret[sort_by_list].apply(lambda x: int(x.mean()), axis=1)
     ret['rank_std'] = ret[sort_by_list].apply(lambda x: int(x.std()), axis=1)
@@ -42,8 +44,11 @@ def get_return_rate_rank(fund_type, num, sort_by_list):
 
 
 def rr_rank_master(chose_type, time_list):
+    file_name = f'{FUND_TYPE.get(chose_type)}基金_收益率排名_{DATE_NOW}.csv'
+    if file_name in os.listdir('data'):
+        return
     rank_df = get_return_rate_rank(fund_type=chose_type, num=10000, sort_by_list=time_list)
-    rank_df.to_csv(f'data/{FUND_TYPE.get(chose_type)}基金_收益率排名_{DATE_NOW}.csv', encoding='utf-8-sig', index=True)
+    rank_df.to_csv(f'data/{file_name}', encoding='utf-8-sig', index=True)
     print(rank_df.shape)
     print(rank_df.head())
     return
