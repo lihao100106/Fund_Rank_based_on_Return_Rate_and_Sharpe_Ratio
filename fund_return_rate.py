@@ -43,7 +43,7 @@ def get_return_rate_rank(fund_type, num, sort_by_list):
 
 def rr_rank_master(chose_type, time_list):
     rank_df = get_return_rate_rank(fund_type=chose_type, num=10000, sort_by_list=time_list)
-    rank_df.to_csv(f'data/{FUND_TYPE.get(chose_type)}基金_收益率排名_{DATE_NOW}.csv', index=True)
+    rank_df.to_csv(f'data/{FUND_TYPE.get(chose_type)}基金_收益率排名_{DATE_NOW}.csv', encoding='utf-8-sig', index=True)
     print(rank_df.shape)
     print(rank_df.head())
     return
