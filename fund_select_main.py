@@ -13,12 +13,12 @@ if __name__ == '__main__':
     """
 
     # 收益率排名
-    for chose_type, chose_name in FUND_TYPE.items():
-        print("正在获取 {} 基金的历史收益率排名...".format(chose_name))
-        rr_rank_master(chose_type=chose_type, time_list=['1y', '3y', '6y', '1n', '2n'])
+    # for chose_type, chose_name in FUND_TYPE.items():
+    #     print(f"正在获取 {chose_name} 基金的历史收益率排名...")
+    #     rr_rank_master(chose_type=chose_type, time_list=['1y', '3y', '6y', '1n', '2n'])
 
-    # # 夏普率排名
-    # chose_type = 'hh'
-    # sr_top_rate = 0.05
-    # sr_begin_date = '2020-01-01'
-    # sr_rank_master(chose_type=chose_type, top_rate=sr_top_rate, begin_date=sr_begin_date)
+    # 夏普率排名
+    chose_type = 'hh'
+    sr_top_rate = 0.05
+    sr_begin_date = '2020-01-01'
+    sr_rank_master(chose_type=chose_type, top_rate=sr_top_rate, begin_date=sr_begin_date)
