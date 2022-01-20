@@ -57,7 +57,7 @@ def get_history_value(code, begin, fund_type):
             df_list.append(ret)
     df_ret = pd.concat(df_list, axis=0)
     print(f"Got history value of fund [{fund_type}]{code}: {df_ret.shape}")
-    df_ret.to_csv(VALUE_DIR + file_name, index=False, encoding='utf-8')
+    df_ret.to_csv(VALUE_DIR + file_name, index=False, encoding='utf-8-sig')
     return
 
 
