@@ -1,5 +1,6 @@
 # coding:utf-8
 from multiprocessing import Process
+import time
 from fund_sharpe_ratio import *
 from fund_return_rate import *
 from config import *
@@ -13,6 +14,8 @@ if __name__ == '__main__':
     sr_begin_date: 计算夏普率的开始日期
     """
 
+    start_time = time.time()
+
     # 收益率排名
     for chose_type, chose_name in FUND_TYPE.items():
         print(f"正在获取 {chose_name} 基金的历史收益率排名...")
@@ -21,7 +24,7 @@ if __name__ == '__main__':
     # 夏普率排名
     chose_type = {'gp': '股票型', 'hh': '混合型', 'zq': '债券型', 'zs': '指数型'}
     sr_top_rate = 0.05
-    sr_begin_date = '2020-01-01'
+    sr_begin_date = '2017-01-01'
     processes = [Process(target=sr_rank_master,
                          kwargs={'chose_type': _type, 'top_rate': sr_top_rate, 'begin_date': sr_begin_date})
                  for _type in chose_type]
@@ -29,3 +32,6 @@ if __name__ == '__main__':
         process.start()
     for process in processes:
         process.join()
+
+    end_time = time.time()
+    print(f'Finished in {end_time - start_time} seconds')
