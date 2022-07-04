@@ -10,10 +10,11 @@ from keras.optimizers import adam_v2
 from keras.backend import std
 import keras.backend
 # random.seed(68)
+INPUT_RANGE = 365
 
 data_directory = './data/history_Net_Asset_Value'
 data_filenames = [_ for _ in os.listdir(data_directory)
-                  if '2022-07-04' in _]  # and (_.startswith('hh_') or _.startswith('gp_'))]
+                  if '2022-07-04' in _]  # and (_.startswith('hh_') or _.startswith('gp_') or _.startswith('zs_'))]
 prefix_length = len('**_fund_value_')
 
 
@@ -22,19 +23,22 @@ def data_filename_to_fund_id(filename: str):
 
 
 def get_X_Y():
-    filename = random.choice(data_filenames)
-    csv_file = pd.read_csv(os.path.join(data_directory, filename))
-    columns = csv_file.shape[0]
-    starting_day = random.randint(0, columns - 5 - 68 - 1)
+    while 1:
+        filename = random.choice(data_filenames)
+        csv_file = pd.read_csv(os.path.join(data_directory, filename))
+        columns = csv_file.shape[0]
+        if columns > INPUT_RANGE + 6 + 1:
+            break
+    starting_day = random.randint(0, columns - 6 - INPUT_RANGE - 1)
     # print(f'Chosen {filename} {csv_file.iloc[starting_day+68, 0]}')
-    X = csv_file.iloc[starting_day:starting_day+68, 1] - 1
-    y = csv_file.iloc[starting_day+68+5, 1] - csv_file.iloc[starting_day+68, 1] - 1
+    X = csv_file.iloc[starting_day:starting_day+INPUT_RANGE, 1] - 1
+    y = csv_file.iloc[starting_day+INPUT_RANGE+6, 1] - csv_file.iloc[starting_day+INPUT_RANGE+1, 1] - 1
     return X, y
 
 
 def custom_loss(y_true, y_pred):
-    mask = keras.backend.less(y_true, y_pred)  # true < pred gets mask == 1; we will probably suffer a loss
-    return (1 + 2 * mask) * mean_squared_error(y_true, y_pred)
+    mask = keras.backend.cast(keras.backend.less(y_true, y_pred), 'float32')  # true < pred gets mask == 1; we will probably suffer a loss
+    return (1 + mask) * mean_squared_error(y_true, y_pred)
 
 
 def train(model: keras.Model=None):
@@ -52,25 +56,26 @@ def train(model: keras.Model=None):
     
     if not model:
         model = Sequential()
-        model.add(LSTM(units=68, return_sequences=True, input_shape=(X_train.shape[1], 1)))
+        model.add(LSTM(units=128, return_sequences=True, input_shape=(X_train.shape[1], 1)))
         model.add(Dropout(0.2))
-        model.add(LSTM(units=68, return_sequences=True))
+        model.add(LSTM(units=128, return_sequences=True))
         model.add(Dropout(0.25))
-        model.add(LSTM(units=68, return_sequences=True))
+        model.add(LSTM(units=128, return_sequences=True))
         model.add(Dropout(0.25))
-        model.add(LSTM(units=68))
+        model.add(LSTM(units=128))
         model.add(Dropout(0.25))
         model.add(Dense(units=1))
-        model.compile(optimizer=adam_v2.Adam(), loss=custom_loss)
+        model.compile(optimizer=adam_v2.Adam(learning_rate=0.0001), loss=custom_loss)
     
-    model.fit(X_train, y_train, epochs=100, batch_size=64)
+    model.fit(X_train, y_train, epochs=50, batch_size=64)
     
     model.save('next_week_profit_model')
     return model
 
 
 # model = train()
-model: keras.Model = keras.models.load_model('next_week_profit_model')
+model: keras.Model = keras.models.load_model('next_week_profit_model',
+                                             custom_objects={'custom_loss': custom_loss})
 # model = train(model)
 test_set_size = 68
 X_test, y_test = [], []
@@ -89,8 +94,10 @@ print(f'stderror: {std(y_predict - y_test)}')
 def get_X(filename: str):
     csv_file = pd.read_csv(os.path.join(data_directory, filename))
     columns = csv_file.shape[0]
-    starting_day = columns - 68
-    X = csv_file.iloc[starting_day:starting_day+68, 1] - 1
+    if columns <= INPUT_RANGE + 1:
+        return None
+    starting_day = columns - INPUT_RANGE
+    X = csv_file.iloc[starting_day:starting_day+INPUT_RANGE, 1] - 1
     return X
 
 
@@ -99,6 +106,8 @@ all_X = []
 fund_ids = []
 for filename in data_filenames:
     X = get_X(filename)
+    if X is None:
+        continue
     all_X.append(X)
     fund_ids.append(data_filename_to_fund_id(filename))
 all_X = np.array(all_X)
