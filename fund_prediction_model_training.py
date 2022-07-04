@@ -13,7 +13,7 @@ import keras.backend
 
 data_directory = './data/history_Net_Asset_Value'
 data_filenames = [_ for _ in os.listdir(data_directory)
-                  if '2022-06-15' in _]  # and (_.startswith('hh_') or _.startswith('gp_'))]
+                  if '2022-07-04' in _]  # and (_.startswith('hh_') or _.startswith('gp_'))]
 prefix_length = len('**_fund_value_')
 
 
@@ -34,7 +34,7 @@ def get_X_Y():
 
 def custom_loss(y_true, y_pred):
     mask = keras.backend.less(y_true, y_pred)  # true < pred gets mask == 1; we will probably suffer a loss
-    return (2 + mask) * mean_squared_error(y_true, y_pred)
+    return (1 + 2 * mask) * mean_squared_error(y_true, y_pred)
 
 
 def train(model: keras.Model=None):
@@ -89,7 +89,7 @@ print(f'stderror: {std(y_predict - y_test)}')
 def get_X(filename: str):
     csv_file = pd.read_csv(os.path.join(data_directory, filename))
     columns = csv_file.shape[0]
-    starting_day = columns - 5 - 68
+    starting_day = columns - 68
     X = csv_file.iloc[starting_day:starting_day+68, 1] - 1
     return X
 
